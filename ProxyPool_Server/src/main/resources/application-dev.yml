@@ -1,0 +1,14 @@
+spring:
+  redis:
+    host: localhost
+    port: 6379
+logging:
+  path: E:\logs\web_logs
+  file: /web_logs
+proxy:
+  from:
+    url66: http://www.66ip.cn/nmtq.php?getnum=200&isp=0&anonymoustype=3&start=&ports=&export=&ipaddress=&area=0&proxytype=2&api=66ip
+  target:
+    commonUrl: http://httpbin.org/get
+  client:
+    tokens: hiouIFKE%wqfgtyi34889?h&%984hj,78YKjfhfyush823^&&^*sdf3as

@@ -1,0 +1,4 @@
+/ProxyPool_Server/src/test/
+/.idea/
+/ProxyPool_Server/target/
+*.iml
