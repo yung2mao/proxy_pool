@@ -2,15 +2,11 @@ package cn.whitetown.controller;
 
 import cn.whitetown.modo.OwnProxy;
 import cn.whitetown.service.ProxyService;
-import cn.whitetown.web.base.exception.define.DefaultResException;
 import cn.whitetown.web.base.model.ResponseData;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * 代理池对外服务
@@ -26,27 +22,46 @@ public class ProxyController {
 
     /**
      * 获取一个通用代理
-     * @param request request
      * @return -
      */
     @GetMapping
-    public ResponseData<OwnProxy> proxy(HttpServletRequest request) {
-        String token = request.getHeader("token");
-        if(StringUtils.isEmpty(token)) {
-            throw new DefaultResException("401", "未授权");
-        }
+    public ResponseData<OwnProxy> proxy() {
         OwnProxy proxy = proxyService.getEnableProxy();
         return ResponseData.ok(proxy);
     }
 
     /**
+     * 获取多个代理
+     * @param size 数量
+     * @return -
+     */
+    @GetMapping("/list")
+    public ResponseData<List<OwnProxy>> proxyList(@RequestParam("size") Integer size) {
+        List<OwnProxy> proxies = proxyService.getEnableProxyList(size);
+        return ResponseData.ok(proxies);
+    }
+
+    /**
      * 获取一个指定url可用的代理
-     * @param basicUrl
-     * @param request
-     * @return
+     * @param basicUrl 需要访问的url
+     * @return -
      */
     @GetMapping("/urls")
-    public ResponseData<OwnProxy> urlProxy(String basicUrl, HttpServletRequest request) {
+    public ResponseData<OwnProxy> urlProxy(@RequestParam("basicUrl") String basicUrl) {
+        OwnProxy proxy = proxyService.getUrlProxy(basicUrl);
+        return ResponseData.ok(proxy);
+    }
+
+    /**
+     * 获取指定url可用代理
+     * @param basicUrl 目标url
+     * @param size 长度
+     * @return -
+     */
+    @GetMapping("/urls/list")
+    public ResponseData<List<OwnProxy>> urlProxyList(@RequestParam("basicUrl") String basicUrl,
+                                                     @RequestParam("size") Integer size) {
+
         return null;
     }
 }

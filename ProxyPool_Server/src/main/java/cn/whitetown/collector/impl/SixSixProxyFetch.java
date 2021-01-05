@@ -16,9 +16,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author: taixian
@@ -34,26 +38,25 @@ public class SixSixProxyFetch implements ProxyFetch {
     private String url;
 
     @Override
-    public OwnProxy fetchProxy() throws BrokenBarrierException, InterruptedException {
-        List<OwnProxy> proxies = fetchProxies();
+    public OwnProxy fetchProxy() throws Exception {
+        Set<OwnProxy> proxies = fetchProxies();
         if(proxies.size() == 0) { return null; }
         int index = RandomUtil.randomInt(proxies.size());
         index = index < proxies.size() ? index : index - 1;
-        return proxies.get(index);
+        return new ArrayList<>(proxies).get(index);
     }
 
     @Override
-    public List<OwnProxy> fetchProxies() throws BrokenBarrierException, InterruptedException {
+    public Set<OwnProxy> fetchProxies() {
         HttpRequest request = CustomHttpUtil.createGet(url);
         HttpResponse response = request.execute();
         if(response.getStatus() != HttpStatus.OK.value()) {
-            return new ArrayList<>();
+            return new HashSet<>();
         }
-        List<OwnProxy> results = new ArrayList<>();
+        List<OwnProxy> proxies = new ArrayList<>();
         String body = response.body();
         String htmlRegex = "<[a-zA-Z \"']+/>";
         body = body.replaceAll(htmlRegex,"");
-        List<String[]> proxies = new ArrayList<>();
         String lineSep = System.getProperty("line.separator");
         for(String proxy : body.split(lineSep)) {
             proxy = proxy.trim();
@@ -64,30 +67,9 @@ public class SixSixProxyFetch implements ProxyFetch {
             if(!Validator.isIpv4(hostPort[0]) || !NumberUtil.isNumber(hostPort[1])) {
                 continue;
             }
-            proxies.add(hostPort);
+            proxies.add(new OwnProxy(hostPort[0], Integer.parseInt(hostPort[1])));
         }
-        CyclicBarrier cyclicBarrier = new CyclicBarrier(proxies.size());
-        proxies.forEach(hostPort -> {
-            OwnProxy ownProxy = new OwnProxy(hostPort[0], Integer.parseInt(hostPort[1]));
-            ThreadUtil.execAsync(() -> {
-                try {
-                    checkAndPut(ownProxy, results, cyclicBarrier);
-                } catch (BrokenBarrierException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-            });
-        });
-        cyclicBarrier.await();
-        return results;
+        return proxyCheck.batchProxyCheck(proxies, null);
     }
 
-    private void checkAndPut(OwnProxy proxy, List<OwnProxy> proxyList, CyclicBarrier cyclicBarrier) throws BrokenBarrierException, InterruptedException {
-        boolean pass = proxyCheck.commonCheck(proxy);
-        if(pass) {
-            synchronized (this) {
-                proxyList.add(proxy);
-            }
-        }
-        cyclicBarrier.await();
-    }
 }

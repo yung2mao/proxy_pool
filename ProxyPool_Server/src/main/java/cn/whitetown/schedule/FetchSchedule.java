@@ -34,14 +34,14 @@ public class FetchSchedule {
     private Set<ProxyFetch> fetchList = null;
 
     @Scheduled(initialDelay = 1000, fixedDelay = 100000)
-    public void fetchTask() throws BrokenBarrierException, InterruptedException {
+    public void fetchTask() throws Exception {
         logger.info("fetch proxy task is started, current Time is {}", DateUtil.now());
         if(fetchList == null) {
             Collection<ProxyFetch> fetches = context.getBeansOfType(ProxyFetch.class).values();
             fetchList = new HashSet<>(fetches);
         }
         for(ProxyFetch proxyFetch : fetchList) {
-            List<OwnProxy> ownProxies = proxyFetch.fetchProxies();
+            Set<OwnProxy> ownProxies = proxyFetch.fetchProxies();
             if(ownProxies.size() == 0) {
                 continue;
             }

@@ -16,7 +16,7 @@ public class CustomHttpUtil {
     public static HttpRequest createGet(String url) {
         HttpRequest request = HttpUtil.createGet(url);
         request.header(ReqHeader.USER_AGENT.getKey(), ReqHeader.USER_AGENT.getValue());
-        request.timeout(3000);
+        request.timeout(2000);
         return request;
     }
 

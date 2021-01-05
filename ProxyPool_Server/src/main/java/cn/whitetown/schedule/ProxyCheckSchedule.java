@@ -1,6 +1,7 @@
 package cn.whitetown.schedule;
 
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.whitetown.check.ProxyCheck;
 import cn.whitetown.config.ProxyConstants;
 import cn.whitetown.modo.OwnProxy;
@@ -12,8 +13,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import java.lang.reflect.Proxy;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author: taixian
@@ -34,25 +42,44 @@ public class ProxyCheckSchedule {
     private ProxySet proxies;
 
     @Scheduled(initialDelay = 5000, fixedDelay = 100000)
-    public void checkProxy() {
+    public void checkProxyTask() throws BrokenBarrierException, InterruptedException, TimeoutException {
         logger.info("the proxy check task is started, the current time is {}", DateUtil.now());
-        Map<OwnProxy, Double> activeProxyMap = new HashMap<>(16);
+        Map<String, Double> activeProxyMap = new HashMap<>(16);
+        Set<OwnProxy> removeProxies = new HashSet<>();
+        CyclicBarrier cyclicBarrier = new CyclicBarrier(proxies.size() + 1);
+        //common check
         for(OwnProxy proxy : proxies) {
-            if(checkProxy(proxy)) {
-                activeProxyMap.put(proxy, (double) proxy.getScore());
-            }
+            ThreadUtil.execAsync(() -> {
+                if(checkProxy(proxy)) {
+                    activeProxyMap.put(proxy.getProxy(), (double) proxy.getScore());
+                }else {
+                    removeProxies.add(proxy);
+                }
+                try {
+                    cyclicBarrier.await();
+                } catch (InterruptedException | BrokenBarrierException e) {
+                    e.printStackTrace();
+                }
+            });
         }
+        if(proxies.size() != 0) {
+            cyclicBarrier.await(5, TimeUnit.SECONDS);
+        }
+
         if(activeProxyMap.size() == 0) {
             return;
         }
         redisManager.save(ProxyConstants.CACHE_KEY, activeProxyMap, ProxyConstants.CACHE_TIME, ProxyConstants.CACHE_UNIT);
+        redisManager.removeByScore(ProxyConstants.CACHE_KEY, Integer.MIN_VALUE, 1);
+        proxies.removeAll(removeProxies);
         logger.info("the proxy check task is ended, total proxy size is {}, the current time is {}", activeProxyMap.size(), DateUtil.now());
     }
 
     private boolean checkProxy(OwnProxy proxy) {
         boolean pass = proxyCheck.commonCheck(proxy);
         if(!pass) {
-            proxy.setScore(proxy.getScore() - 1);
+            int score = proxy.getScore() > ProxyConstants.BASIC_SCORE ? ProxyConstants.BASIC_SCORE : proxy.getScore() - 1;
+            proxy.setScore(score);
         }else if(proxy.getScore() < ProxyConstants.BASIC_SCORE) {
             proxy.setScore(ProxyConstants.BASIC_SCORE);
         }else {

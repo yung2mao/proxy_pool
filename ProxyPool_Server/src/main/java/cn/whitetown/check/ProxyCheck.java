@@ -2,6 +2,10 @@ package cn.whitetown.check;
 
 import cn.whitetown.modo.OwnProxy;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
 /**
  * @author: taixian
  * @date: created in 2021/01/04
@@ -22,4 +26,12 @@ public interface ProxyCheck {
      * @return -
      */
     boolean urlProxyCheck(OwnProxy proxy, String url);
+
+    /**
+     * 批量通用性校验
+     * @param proxies 代理集
+     * @param basicUrl 目标地址 为空时校验通用地址
+     * @return 可用代理集
+     */
+    Set<OwnProxy> batchProxyCheck(Collection<OwnProxy> proxies, String basicUrl);
 }

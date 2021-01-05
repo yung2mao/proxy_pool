@@ -12,4 +12,7 @@ public class ProxyConstants {
     public static final TimeUnit CACHE_UNIT = TimeUnit.HOURS;
 
     public static final int BASIC_SCORE = 10;
+    public static final int ENABLE_SCORE = 13;
+    public static final double MIN_SCORE = 0;
+    public static final int CACHE_FETCH_SIZE = 200;
 }

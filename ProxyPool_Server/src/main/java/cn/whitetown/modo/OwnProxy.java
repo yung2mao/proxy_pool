@@ -5,9 +5,7 @@ import com.alibaba.fastjson.JSON;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * @author: taixian
@@ -19,12 +17,13 @@ public class OwnProxy {
     private String ip;
     private Integer port;
     private int score;
-    private Set<String> includeUrls = new HashSet<>();
-    private Set<String> excludeUrls = new HashSet<>();
     private String content;
 
     public String getProxy() {
         return ip + ":" + port;
+    }
+
+    public OwnProxy() {
     }
 
     public OwnProxy(String ip, Integer port) {

@@ -3,7 +3,9 @@ package cn.whitetown.collector;
 import cn.whitetown.modo.OwnProxy;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * 代理抓取
@@ -15,16 +17,14 @@ public interface ProxyFetch {
     /**
      * 抓取一个代理
      * @return -
-     * @throws BrokenBarrierException -
-     * @throws InterruptedException -
+     * @throws Exception e
      */
-    OwnProxy fetchProxy() throws BrokenBarrierException, InterruptedException;
+    OwnProxy fetchProxy() throws Exception;
 
     /**
      * 一次抓取多个代理
      * @return -
-     * @throws BrokenBarrierException -
-     * @throws InterruptedException -
+     * @throws Exception e
      */
-    List<OwnProxy> fetchProxies() throws BrokenBarrierException, InterruptedException;
+    Set<OwnProxy> fetchProxies() throws Exception;
 }
