@@ -3,6 +3,7 @@ package cn.whitetown.schedule;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.whitetown.collector.ProxyFetch;
+import cn.whitetown.config.ProxyPoolConfig;
 import cn.whitetown.modo.OwnProxy;
 import cn.whitetown.modo.ProxySet;
 import org.slf4j.Logger;
@@ -29,6 +30,9 @@ public class FetchSchedule {
     private ApplicationContext context;
 
     @Autowired
+    private ProxyPoolConfig proxyPoolConfig;
+
+    @Autowired
     private ProxySet proxySet;
 
     private Set<ProxyFetch> fetchList = null;
@@ -46,6 +50,9 @@ public class FetchSchedule {
                 continue;
             }
             proxySet.addAll(ownProxies);
+            if(proxySet.size() > proxyPoolConfig.poolCapacity()) {
+                break;
+            }
         }
         logger.info("fetch proxy task is ended, total proxy size is {}, current time is {}", proxySet.size(), DateTime.now());
     }

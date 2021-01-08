@@ -13,15 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 
-import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * @author: taixian
@@ -42,11 +39,11 @@ public class ProxyCheckSchedule {
     private ProxySet proxies;
 
     @Scheduled(initialDelay = 5000, fixedDelay = 100000)
-    public void checkProxyTask() throws BrokenBarrierException, InterruptedException, TimeoutException {
+    public void checkProxyTask() throws InterruptedException {
         logger.info("the proxy check task is started, the current time is {}", DateUtil.now());
         Map<String, Double> activeProxyMap = new HashMap<>(16);
         Set<OwnProxy> removeProxies = new HashSet<>();
-        CyclicBarrier cyclicBarrier = new CyclicBarrier(proxies.size() + 1);
+        CountDownLatch countDownLatch = new CountDownLatch(proxies.size() + 1);
         //common check
         for(OwnProxy proxy : proxies) {
             ThreadUtil.execAsync(() -> {
@@ -55,15 +52,11 @@ public class ProxyCheckSchedule {
                 }else {
                     removeProxies.add(proxy);
                 }
-                try {
-                    cyclicBarrier.await();
-                } catch (InterruptedException | BrokenBarrierException e) {
-                    e.printStackTrace();
-                }
+                countDownLatch.countDown();
             });
         }
         if(proxies.size() != 0) {
-            cyclicBarrier.await(5, TimeUnit.SECONDS);
+            countDownLatch.await(5, TimeUnit.SECONDS);
         }
 
         if(activeProxyMap.size() == 0) {

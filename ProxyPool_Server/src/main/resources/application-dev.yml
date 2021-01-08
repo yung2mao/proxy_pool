@@ -12,3 +12,9 @@ proxy:
     commonUrl: http://httpbin.org/get
   client:
     tokens: hiouIFKE%wqfgtyi34889?h&%984hj,78YKjfhfyush823^&&^*sdf3as
+  capacity: 1000
+thread:
+  pool:
+    coreSize: 100
+    maxSize: 200
+    queueSize: 1000
